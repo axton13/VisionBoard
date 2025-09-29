@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vision Board App</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Lucide React Icons as inline SVG components
+        const Camera = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+            </svg>
+        );
+
+        const X = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+
+        const Bell = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+        );
+
+        const Eye = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+        );
+
+        const Sparkles = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path>
+                <path d="M5 3v4"></path>
+                <path d="M19 17v4"></path>
+                <path d="M3 5h4"></path>
+                <path d="M17 19h4"></path>
+            </svg>
+        );
+
+        const Plus = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+
+        const Share2 = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+        );
+
+        const Link = ({ size = 24, className = "" }) => (
+            <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+        );
+
+        function VisionBoardApp() {
+            const [images, setImages] = useState([]);
+            const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+            const [showVisualization, setShowVisualization] = useState(false);
+            const [currentGoal, setCurrentGoal] = useState(null);
+            const [goalTitles, setGoalTitles] = useState({});
+            const [editingTitle, setEditingTitle] = useState(null);
+            const [showShareMenu, setShowShareMenu] = useState(false);
+
+            useEffect(() => {
+                const stored = localStorage.getItem('visionBoardImages');
+                const storedTitles = localStorage.getItem('visionBoardTitles');
+                if (stored) setImages(JSON.parse(stored));
+                if (storedTitles) setGoalTitles(JSON.parse(storedTitles));
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('visionBoardImages', JSON.stringify(images));
+            }, [images]);
+
+            useEffect(() => {
+                localStorage.setItem('visionBoardTitles', JSON.stringify(goalTitles));
+            }, [goalTitles]);
+
+            const handleImageUpload = (e) => {
+                const files = Array.from(e.target.files);
+                if (images.length + files.length > 10) {
+                    alert('You can only upload up to 10 images');
+                    return;
+                }
+
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        setImages(prev => [...prev, {
+                            id: Date.now() + Math.random(),
+                            src: event.target.result,
+                            position: { x: Math.random() * 60, y: Math.random() * 60 }
+                        }]);
+                    };
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            const removeImage = (id) => {
+                setImages(prev => prev.filter(img => img.id !== id));
+                setGoalTitles(prev => {
+                    const updated = { ...prev };
+                    delete updated[id];
+                    return updated;
+                });
+            };
+
+            const enableNotifications = () => {
+                if ('Notification' in window) {
+                    Notification.requestPermission().then(permission => {
+                        if (permission === 'granted') {
+                            setNotificationsEnabled(true);
+                            scheduleNotification();
+                        }
+                    });
+                } else {
+                    alert('Your browser does not support notifications');
+                }
+            };
+
+            const scheduleNotification = () => {
+                if (images.length === 0) return;
+                
+                const randomImage = images[Math.floor(Math.random() * images.length)];
+                const title = goalTitles[randomImage.id] || 'Your Vision Board Goal';
+                
+                new Notification('Daily Vision Board Reminder', {
+                    body: `Time to visualize: ${title}`,
+                    icon: randomImage.src
+                });
+            };
+
+            const startVisualization = () => {
+                if (images.length === 0) {
+                    alert('Add some goals to your vision board first!');
+                    return;
+                }
+                const randomImage = images[Math.floor(Math.random() * images.length)];
+                setCurrentGoal(randomImage);
+                setShowVisualization(true);
+            };
+
+            const updateTitle = (id, title) => {
+                setGoalTitles(prev => ({ ...prev, [id]: title }));
+                setEditingTitle(null);
+            };
+
+            const generateShareableImage = async () => {
+                const board = document.querySelector('.vision-board-container');
+                if (!board) return null;
+                
+                // Create a canvas to combine all images
+                const canvas = document.createElement('canvas');
+                canvas.width = 1200;
+                canvas.height = 1200;
+                const ctx = canvas.getContext('2d');
+                
+                // Background gradient
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, '#faf5ff');
+                gradient.addColorStop(0.5, '#fce7f3');
+                gradient.addColorStop(1, '#eff6ff');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Add title
+                ctx.fillStyle = '#9333ea';
+                ctx.font = 'bold 48px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('My Vision Board', canvas.width / 2, 60);
+                
+                return canvas.toDataURL('image/png');
+            };
+
+            const copyLink = () => {
+                const shareText = 'I created my Vision Board! Create yours too at: [Your Vision Board App URL]';
+                navigator.clipboard.writeText(shareText);
+                alert('Share text copied to clipboard! Note: Since this is a local HTML file, share a screenshot of your vision board or host this file online to share a working link.');
+                setShowShareMenu(false);
+            };
+
+            const shareToFacebook = async () => {
+                alert('To share on Facebook:\n1. Take a screenshot of your vision board\n2. Upload it to Facebook\n3. Add a caption about your goals!\n\nNote: Direct sharing requires this app to be hosted online.');
+                setShowShareMenu(false);
+            };
+
+            const shareToX = async () => {
+                const text = encodeURIComponent('Just created my Vision Board! 🎯✨ Setting my goals and visualizing success! #VisionBoard #Goals #Manifestation');
+                alert('To share on X (Twitter):\n1. Take a screenshot of your vision board\n2. Click OK to open X\n3. Attach your screenshot and post!\n\nOpening X now...');
+                window.open(`https://twitter.com/intent/tweet?text=${text}`, '_blank');
+                setShowShareMenu(false);
+            };
+
+            const shareToInstagram = () => {
+                alert('To share on Instagram:\n1. Take a screenshot of your vision board\n2. Open Instagram on your phone\n3. Create a new post with your screenshot\n4. Use hashtags: #VisionBoard #Goals #Manifestation\n\nTip: Instagram Stories work great for vision boards!');
+                setShowShareMenu(false);
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+                    {/* Header */}
+                    <div className="bg-white/80 backdrop-blur-sm shadow-sm sticky top-0 z-10">
+                        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+                            <div className="flex items-center gap-2">
+                                <Sparkles size={28} className="text-purple-600" />
+                                <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                                    My Vision Board
+                                </h1>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={startVisualization}
+                                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-all shadow-md hover:shadow-lg"
+                                >
+                                    <Eye size={18} />
+                                    Visualize
+                                </button>
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setShowShareMenu(!showShareMenu)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-all shadow-md hover:shadow-lg"
+                                    >
+                                        <Share2 size={18} />
+                                        Share
+                                    </button>
+                                    {showShareMenu && (
+                                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl z-20 overflow-hidden">
+                                            <button
+                                                onClick={copyLink}
+                                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                                            >
+                                                <Link size={18} className="text-gray-600" />
+                                                <span className="text-sm text-gray-700">Copy Link</span>
+                                            </button>
+                                            <button
+                                                onClick={shareToFacebook}
+                                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 transition-colors text-left"
+                                            >
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="#1877F2">
+                                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                                </svg>
+                                                <span className="text-sm text-gray-700">Facebook</span>
+                                            </button>
+                                            <button
+                                                onClick={shareToX}
+                                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors text-left"
+                                            >
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="#000000">
+                                                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                                                </svg>
+                                                <span className="text-sm text-gray-700">X (Twitter)</span>
+                                            </button>
+                                            <button
+                                                onClick={shareToInstagram}
+                                                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-pink-50 transition-colors text-left"
+                                            >
+                                                <svg width="18" height="18" viewBox="0 0 24 24" fill="url(#instagram-gradient)">
+                                                    <defs>
+                                                        <linearGradient id="instagram-gradient" x1="0%" y1="100%" x2="100%" y2="0%">
+                                                            <stop offset="0%" style={{stopColor: '#FEC564', stopOpacity: 1}} />
+                                                            <stop offset="50%" style={{stopColor: '#E1306C', stopOpacity: 1}} />
+                                                            <stop offset="100%" style={{stopColor: '#5B51D8', stopOpacity: 1}} />
+                                                        </linearGradient>
+                                                    </defs>
+                                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+                                                </svg>
+                                                <span className="text-sm text-gray-700">Instagram</span>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                <button
+                                    onClick={enableNotifications}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all shadow-md hover:shadow-lg ${
+                                        notificationsEnabled 
+                                            ? 'bg-green-500 text-white' 
+                                            : 'bg-white text-gray-700 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    <Bell size={18} />
+                                    {notificationsEnabled ? 'Notifications On' : 'Enable Notifications'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="max-w-7xl mx-auto px-4 py-8">
+                        {/* Upload Section */}
+                        {images.length < 10 && (
+                            <div className="mb-8">
+                                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-purple-300 rounded-lg cursor-pointer bg-white/50 hover:bg-white/80 transition-all">
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                        <Plus size={32} className="text-purple-500" />
+                                        <p className="ext-gray-600">
+                                            <span className="font-semibold text-purple-600">Click to upload</span> your vision board images
+                                        </p>
+                                        <p className="text-xs text-gray-500">{images.length}/10 images uploaded</p>
+                                    </div>
+                                    <input
+                                        type="file"
+                                        className="hidden"
+                                        accept="image/*"
+                                        multiple
+                                        onChange={handleImageUpload}
+                                    />
+                                </label>
+                            </div>
+                        )}
+
+                        {/* Vision Board Display */}
+                        {images.length > 0 ? (
+                            <div className="vision-board-container bg-white/60 backdrop-blur-sm rounded-2xl shadow-xl p-8 min-h-[600px] relative overflow-hidden">
+                                <div className="absolute inset-0 bg-gradient-to-br from-purple-100/20 to-pink-100/20"></div>
+                                <div className="relative grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                    {images.map((img) => (
+                                        <div key={img.id} className="group relative">
+                                            <div className="aspect-square rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all transform hover:scale-105">
+                                                <img
+                                                    src={img.src}
+                                                    alt="Vision board goal"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={() => removeImage(img.id)}
+                                                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-all shadow-lg hover:bg-red-600"
+                                            >
+                                                <X size={16} />
+                                            </button>
+                                            {editingTitle === img.id ? (
+                                                <input
+                                                    type="text"
+                                                    autoFocus
+                                                    placeholder="Goal title..."
+                                                    defaultValue={goalTitles[img.id] || ''}
+                                                    onBlur={(e) => updateTitle(img.id, e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && updateTitle(img.id, e.target.value)}
+                                                    className="mt-2 w-full px-2 py-1 text-sm border border-purple-300 rounded focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                />
+                                            ) : (
+                                                <p
+                                                    onClick={() => setEditingTitle(img.id)}
+                                                    className="mt-2 text-sm text-center text-gray-700 cursor-pointer hover:text-purple-600 transition-colors"
+                                                >
+                                                    {goalTitles[img.id] || 'Click to add title...'}
+                                                </p>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-xl p-16 text-center">
+                                <Camera size={64} className="mx-auto text-purple-300 mb-4" />
+                                <h2 className="text-2xl font-semibold text-gray-700 mb-2">Start Your Vision Board</h2>
+                                <p className="text-gray-500">Upload images of your goals and dreams to get started</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Visualization Modal */}
+                    {showVisualization && currentGoal && (
+                        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+                            <div className="max-w-2xl w-full bg-gradient-to-br from-purple-900 to-pink-900 rounded-2xl p-8 relative">
+                                <button
+                                    onClick={() => setShowVisualization(false)}
+                                    className="absolute top-4 right-4 text-white/80 hover:text-white"
+                                >
+                                    <X size={24} />
+                                </button>
+                                
+                                <div className="text-center space-y-6">
+                                    <h2 className="text-3xl font-bold text-white mb-4">
+                                        {goalTitles[currentGoal.id] || 'Your Goal'}
+                                    </h2>
+                                    
+                                    <div className="rounded-xl overflow-hidden shadow-2xl max-h-80">
+                                        <img
+                                            src={currentGoal.src}
+                                            alt="Visualization goal"
+                                            className="w-full h-full object-contain"
+                                        />
+                                    </div>
+                                    
+                                    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 text-white space-y-4">
+                                        <h3 className="text-xl font-semibold">Visualization Exercise</h3>
+                                        <div className="text-left space-y-3 text-sm">
+                                            <p>1. Take three deep breaths and relax your body</p>
+                                            <p>2. Look at your goal and imagine it's already yours</p>
+                                            <p>3. Feel the emotions of achieving this goal</p>
+                                            <p>4. Visualize the steps that led you to success</p>
+                                            <p>5. Affirm: "I am capable of achieving this goal"</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <button
+                                        onClick={() => setShowVisualization(false)}
+                                        className="px-6 py-3 bg-white text-purple-900 rounded-lg font-semibold hover:bg-purple-50 transition-all"
+                                    >
+                                        Complete Visualization
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<VisionBoardApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
+ classNa
